@@ -43,7 +43,7 @@ Instala estas dependencias ejecutando:
 
 Una vez que ejecutes el proyecto, deberías ver algo similar a la siguiente imagen:
 
-![Resultado del Renderizado](https://github.com/Fabiola-cc/render_pipeline/assets/nave_rendered.png)
+![Resultado del Renderizado](https://github.com/Fabiola-cc/render_pipeline/blob/main/assets/nave_rendered.png)
 
 ## Estructura del Proyecto
 
