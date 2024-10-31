@@ -2,6 +2,11 @@ use nalgebra_glm::{Vec3, Mat4};
 use minifb::{Key, Window, WindowOptions};
 use std::time::Duration;
 use std::f32::consts::PI;
+use framebuffer::Framebuffer;
+use vertex::Vertex;
+use obj::Obj;
+use triangle::triangle;
+use shaders::vertex_shader;
 
 mod framebuffer;
 mod triangle;
@@ -11,13 +16,6 @@ mod obj;
 mod color;
 mod fragment;
 mod shaders;
-
-use framebuffer::Framebuffer;
-use vertex::Vertex;
-use obj::Obj;
-use triangle::triangle;
-use shaders::vertex_shader;
-
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -115,16 +113,16 @@ fn main() {
     )
     .unwrap();
 
-    window.set_position(500, 500);
+    window.set_position(700, 500);
     window.update();
 
     framebuffer.set_background_color(0x333355);
 
     let mut translation = Vec3::new(300.0, 200.0, 0.0);
     let mut rotation = Vec3::new(0.0, 0.0, 0.0);
-    let mut scale = 100.0f32;
+    let mut scale = 50.0f32;
 
-    let obj = Obj::load("assets/sin_nombre.obj").expect("Failed to load obj");
+    let obj = Obj::load("assets/nave.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array(); 
 
     while window.is_open() {
