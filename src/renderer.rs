@@ -33,7 +33,7 @@ impl Renderer {
             }
             3 => {
                 self.current_shader = ShaderType::Dalmata;
-                self.current_noise = NoiseUse::Ground;
+                self.current_noise = NoiseUse::Lava;
             }
             4 => {
                 self.current_shader = ShaderType::Cloud;

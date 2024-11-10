@@ -50,15 +50,160 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 
 pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
   match renderer.current_shader {
-      ShaderType::RandomColor => random_color_shader(fragment, uniforms),
+      ShaderType::RandomColor => gaseous_giant_shader(fragment, uniforms),
       ShaderType::BlackAndWhite => black_and_white(fragment, uniforms),
       ShaderType::Dalmata => dalmata_shader(fragment, uniforms),
       ShaderType::Cloud => cloud_shader(fragment, uniforms),
       ShaderType::Cellular => cellular_shader(fragment, uniforms),
-      ShaderType::Lava => lava_shader(fragment, uniforms),
+      ShaderType::Lava => solar_shader(fragment, uniforms),
       ShaderType::BlueGreen => blue_green_shader(fragment, uniforms),
   }
 }
+
+fn rocky_planet_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para un planeta rocoso
+  let base_color = Color::new(139, 69, 19);      // Marrón rojizo (típico de Marte)
+  let highlight_color = Color::new(210, 180, 140); // Color claro para resaltar montañas y bordes
+  let shadow_color = Color::new(50, 25, 0);       // Sombra para simular cráteres y profundidad
+
+  // Coordenadas de posición del fragmento
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let depth = fragment.depth;
+
+  // Parámetros para el efecto de ruido
+  let zoom = 150.0;                // Factor de zoom para el ruido, define el tamaño de los cráteres y montañas
+  let bumpiness = 0.3;             // Ajuste de rugosidad para dar más textura a la superficie
+  let t = uniforms.time as f32 * 0.005; // Variación temporal mínima para animar pequeñas partículas en suspensión
+
+  // Primer nivel de ruido para simular detalles grandes de la superficie (montañas, valles)
+  let terrain_noise = uniforms.noise.get_noise_3d(
+      x * zoom, 
+      y * zoom, 
+      depth * zoom
+  );
+
+  // Segundo nivel de ruido, de menor escala, para añadir detalles más pequeños (rugosidad de la superficie)
+  let fine_detail_noise = uniforms.noise.get_noise_3d(
+      x * zoom * 5.0, 
+      y * zoom * 5.0, 
+      depth * zoom * 5.0
+  );
+
+  // Combinación de ruidos para obtener una superficie rugosa y con variaciones
+  let combined_noise = (terrain_noise * 0.6 + fine_detail_noise * 0.4) * bumpiness;
+
+  // Selección de color en función del valor de ruido para crear efecto de montañas y sombras
+  let color = if combined_noise > 0.4 {
+      highlight_color  // Áreas más elevadas y bordes de montañas
+  } else if combined_noise > 0.2 {
+      base_color       // Color base para la mayor parte de la superficie
+  } else {
+      shadow_color     // Sombra para simular cráteres y depresiones
+  };
+
+  // Ajustar la intensidad para efectos de luz y sombra
+  color * fragment.intensity
+}
+
+
+fn gaseous_giant_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para la atmósfera de un gigante gaseoso (pueden ajustarse para simular diferentes planetas)
+  let cloud_color = Color::new(232, 220, 77);  
+  let band_color1 = Color::new(255, 255, 255); 
+  let band_color2 = Color::new(255, 215, 0);   
+  let shadow_color = Color::new(245, 212, 122); 
+
+  // Coordenadas de posición del fragmento
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let depth = fragment.depth;
+
+  // Parámetros de desplazamiento y movimiento de las capas de nubes
+  let t = uniforms.time as f32 * 0.02;           // Tiempo para animar el movimiento de nubes
+  let zoom = 200.0;                              // Factor de zoom para el ruido
+  let speed_factor = 0.1;                        // Controla la velocidad de desplazamiento de bandas
+
+  // Primer nivel de ruido para la capa de nubes
+  let noise1 = uniforms.noise.get_noise_3d(
+      x * zoom + t * speed_factor, 
+      y * zoom, 
+      depth * zoom
+  );
+
+  // Segundo nivel de ruido para más detalle
+  let noise2 = uniforms.noise.get_noise_3d(
+      x * zoom * 0.5 + t * speed_factor * 0.5, 
+      y * zoom * 0.5, 
+      depth * zoom * 0.5
+  );
+
+  // Mezclar los dos niveles de ruido
+  let combined_noise = (noise1 * 0.6 + noise2 * 0.4).abs();
+
+  // Calcular colores basados en el valor del ruido combinado para crear bandas atmosféricas
+  let color = if combined_noise > 0.6 {
+      cloud_color
+  } else if combined_noise > 0.3 {
+      band_color1.lerp(&band_color2, combined_noise)
+  } else {
+      shadow_color
+  };
+
+  // Ajustar la intensidad para simular efectos de luz y sombra
+  color * fragment.intensity
+}
+
+
+fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para la textura de "estrella" o "sol"
+  let core_color = Color::new(255, 69, 0); // Naranja rojizo intenso
+  let outer_glow_color = Color::new(255, 179, 0); // Naranja rojizo intenso
+  let dark_spot_color = Color::new(255, 200, 0);      // Amarillo brillante
+
+  // Obtener la posición del fragmento
+  let position = Vec3::new(
+      fragment.vertex_position.x,
+      fragment.vertex_position.y,
+      fragment.depth,
+  );
+
+  // Parámetros de pulsación
+  let base_frequency = 0.3;
+  let pulsate_amplitude = 0.4;
+  let t = uniforms.time as f32 * 0.015;
+
+  // Efecto de pulsación en el eje z
+  let pulsate = (t * base_frequency).sin() * pulsate_amplitude;
+
+  // Zoom para detalles de ruido
+  let zoom = 800.0; // Factor de zoom para controlar el tamaño de las "llamas" y "manchas"
+  let noise_value1 = uniforms.noise.get_noise_3d(
+      position.x * zoom,
+      position.y * zoom,
+      (position.z + pulsate) * zoom,
+  );
+  let noise_value2 = uniforms.noise.get_noise_3d(
+      (position.x + 1200.0) * zoom,
+      (position.y + 1200.0) * zoom,
+      (position.z + 1200.0 + pulsate) * zoom,
+  );
+
+  // Combinación de ruido para suavizar la transición y agregar complejidad
+  let noise_value = (noise_value1 + noise_value2) * 0.5;
+
+  // Definir colores basados en el valor de ruido y umbrales para simular actividad solar
+  let color = if noise_value > 0.4 {
+      core_color.lerp(&outer_glow_color, noise_value * 0.8)
+  } else if noise_value > -0.2 {
+      outer_glow_color.lerp(&dark_spot_color, noise_value * 0.5)
+  } else {
+      dark_spot_color
+  };
+
+  color * fragment.intensity
+}
+
 
 fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Define los colores base para azul y verde
@@ -86,6 +231,38 @@ fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   };
 
   // Multiplica por intensidad para aplicar efectos de iluminación
+  color * fragment.intensity
+}
+
+fn tri_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Define los colores para cada capa
+  let blue_color = Color::new(0, 0, 255);      // Azul
+  let green_color = Color::new(0, 255, 0);     // Verde
+  let cyan_color = Color::new(0, 255, 255);    // Cian (como color intermedio)
+
+  // Configura valores para el tamaño y la repetición del patrón
+  let zoom = 50.0;
+  let ox = 100.0;
+  let oy = 100.0;
+
+  // Coordenadas de ruido y variación en el tiempo
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let t = uniforms.time as f32 * 0.1; // Suaviza la variación temporal del ruido
+
+  // Calcula el valor de ruido en 2D
+  let noise_value = uniforms.noise.get_noise_2d(x * zoom + ox + t, y * zoom + oy);
+
+  // Define umbrales para decidir el color basado en el valor de ruido
+  let color = if noise_value > 0.5 {
+      blue_color
+  } else if noise_value > -0.5 {
+      cyan_color // Color intermedio
+  } else {
+      green_color
+  };
+
+  // Ajusta el color según la intensidad de iluminación del fragmento
   color * fragment.intensity
 }
 
