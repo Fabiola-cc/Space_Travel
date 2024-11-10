@@ -1,53 +1,54 @@
-# Renderizado
+# Shaders
 
-Este proyecto es un renderizador simple implementado en Rust que utiliza la biblioteca `nalgebra_glm` para realizar transformaciones en 3D (traslación, rotación y escalado). Utiliza también `minifb` para crear una ventana y mostrar los resultados. El renderizador puede cargar un modelo `.obj` y aplicar rotación al modelo, junto con una serie de transformaciones controladas por el usuario.
+Este proyecto implementa un sistema de renderizado procedural en Rust utilizando shaders personalizados y ruido procedural para generar efectos visuales de diferentes planetas. Puedes explorar el entorno con controles de cámara y cambiar entre varios planetas para observar distintas texturas y efectos en tiempo real.
 
-## Características
+## Tecnologías
 
-- Renderización de modelos 3D en Rust.
-- Transformaciones básicas: traslación, rotación y escalado.
-- Control de movimiento y escalado mediante teclado.
-- Transformaciones adicionales en el eje Y para simular animaciones.
-- Gestión de color y profundidad de fragmentos.
+- **Rust**: Lenguaje de programación utilizado para el desarrollo.
+- **nalgebra_glm**: Librería de álgebra lineal para operaciones vectoriales y matriciales.
+- **minifb**: Librería para la creación de ventanas y manejo de gráficos.
+- **fastnoise_lite**: Librería de ruido procedural para generar texturas.
 
-## Dependencias
+## Estructura de Archivos
 
-Este proyecto requiere las siguientes dependencias de Rust:
-- [`nalgebra_glm`](https://crates.io/crates/nalgebra-glm): para las operaciones de álgebra lineal.
-- [`minifb`](https://crates.io/crates/minifb): para manejar la ventana.
-- [`obj`](https://crates.io/crates/obj): para cargar modelos en formato `.obj`.
+- **`main.rs`**: Archivo principal que inicializa el sistema de renderizado y contiene el loop principal de la aplicación.
+- **`renderer.rs`**: Define la estructura y lógica del `Renderer`, que administra el shader y el ruido actual.
+- **`shaders.rs`**: Contiene las implementaciones de los shaders para cada planeta.
+- **`vertex.rs`**: Define la estructura y transformación de vértices para renderizado.
+- **`color.rs`**: Define la estructura de color y las operaciones de interpolación de color.
+- **`fragment.rs`**: Define la estructura de fragmento, que almacena los datos de cada pixel en pantalla.
 
-Instala estas dependencias ejecutando:
+## Controles de Teclado
 
-```bash
-    cargo install nalgebra_glm minifb obj
-```
+### Selección de Planetas
 
-## Cómo Usarlo
+Para cambiar entre planetas, usa las teclas del `1` al `7`:
 
-1. **Descarga o clona este repositorio**.
-2. **Prepara tu modelo `.obj`** en la carpeta `assets/` (o en la ubicación que especifiques en tu código).
-3. **Compila el proyecto** con Rust en modo release.
-4. **Ejecuta el proyecto** para ver el modelo renderizado.
+- **1-7**: Cambia al planeta correspondiente y aplica un shader y tipo de ruido específicos.
 
-### Controles
+### Controles de Cámara
 
-- **Movimiento**: Usa las flechas para mover el modelo en el eje X e Y.
-- **Escalado**: Tecla `S` para aumentar y tecla `A` para reducir el tamaño del modelo.
-- **Rotación**:
-  - Eje X: `Q` y `W`
-  - Eje Y: `E` y `R`
-  - Eje Z: `T` y `Y`
-  
-### Ejemplo de Resultado
+- **Órbita de Cámara**:
+  - Flecha **Izquierda**: Rotar la cámara hacia la izquierda.
+  - Flecha **Derecha**: Rotar la cámara hacia la derecha.
+  - **W**: Rotar hacia arriba.
+  - **S**: Rotar hacia abajo.
 
-Una vez que ejecutes el proyecto, deberías ver algo similar a la siguiente imagen:
+- **Movimiento de Cámara**:
+  - **A**: Mover cámara hacia la izquierda.
+  - **D**: Mover cámara hacia la derecha.
+  - **Q**: Mover cámara hacia arriba.
+  - **E**: Mover cámara hacia abajo.
 
-![Resultado del Renderizado](https://github.com/Fabiola-cc/render_pipeline/blob/main/assets/nave_rendered.png)
+- **Zoom de Cámara**:
+  - Flecha **Arriba**: Acercar.
+  - Flecha **Abajo**: Alejar.
 
-## Estructura del Proyecto
+Cada tecla modifica la posición o el ángulo de la cámara, permitiéndote explorar libremente el entorno y observar los efectos visuales de los diferentes shaders.
 
-- **framebuffer**: Módulo para manejar el buffer de fotogramas y renderizar píxeles.
-- **triangle**: Función de rasterización de triángulos.
-- **vertex**: Estructura y transformaciones de vértices.
-- **shaders**: Funciones para aplicar sombreado a los vértices.
+## Ejecución del Proyecto
+
+Para compilar y ejecutar el proyecto, asegúrate de tener Rust instalado y ejecuta el siguiente comando en la raíz del proyecto:
+``cargo run``
+
+El programa abrirá una ventana donde podrás ver los efectos visuales de cada planeta y experimentar con las distintas opciones de renderizado.
