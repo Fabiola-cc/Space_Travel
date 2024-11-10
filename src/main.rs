@@ -10,6 +10,7 @@ mod color;
 mod fragment;
 mod shaders;
 mod camera;
+mod renderer;
 
 use framebuffer::Framebuffer;
 use vertex::Vertex;
@@ -18,7 +19,7 @@ use camera::Camera;
 use triangle::triangle;
 use shaders::{vertex_shader, fragment_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
-
+use crate::renderer::{Renderer, NoiseUse, ShaderType};
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -29,12 +30,15 @@ pub struct Uniforms {
     noise: FastNoiseLite
 }
 
-fn create_noise() -> FastNoiseLite {
-    create_cloud_noise() 
-    // create_cell_noise()
-    // create_ground_noise()
-    // create_lava_noise()
+fn create_noise(renderer: &Renderer) -> FastNoiseLite {
+    match renderer.current_noise {
+        NoiseUse::Cloud => create_cloud_noise(),
+        NoiseUse::Cell => create_cell_noise(),
+        NoiseUse::Ground => create_ground_noise(),
+        NoiseUse::Lava => create_lava_noise(),
+    }
 }
+
 
 fn create_cloud_noise() -> FastNoiseLite {
     let mut noise = FastNoiseLite::with_seed(1337);
@@ -138,7 +142,7 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
-fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex]) {
+fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], renderer: &Renderer) {
     // Vertex Shader Stage
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
     for vertex in vertex_array {
@@ -170,7 +174,7 @@ fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Ve
         let y = fragment.position.y as usize;
         if x < framebuffer.width && y < framebuffer.height {
             // Apply fragment shader
-            let shaded_color = fragment_shader(&fragment, &uniforms);
+            let shaded_color = fragment_shader(&fragment, &uniforms, &renderer);
             let color = shaded_color.to_hex();
             framebuffer.set_current_color(color);
             framebuffer.point(x, y, fragment.depth);
@@ -184,6 +188,11 @@ fn main() {
     let framebuffer_width = 800;
     let framebuffer_height = 600;
 
+    let mut renderer = Renderer {
+        current_shader: ShaderType::RandomColor, 
+        current_noise: NoiseUse::Cloud,         
+    };
+    
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
     let mut window = Window::new(
         "Rust Graphics - Renderer Example",
@@ -210,11 +219,11 @@ fn main() {
         Vec3::new(0.0, 1.0, 0.0)
     );
 
-    let obj = Obj::load("assets/models/model.obj").expect("Failed to load obj");
+    let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array(); 
     let mut time = 0;
 
-    let noise = create_noise();
+    let noise = create_noise(&renderer);
     let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
     let viewport_matrix = create_viewport_matrix(framebuffer_width as f32, framebuffer_height as f32);
     let mut uniforms = Uniforms { 
@@ -233,7 +242,7 @@ fn main() {
 
         time += 1;
 
-        handle_input(&window, &mut camera);
+        handle_input(&window, &mut camera, &mut renderer);
 
         framebuffer.clear();
 
@@ -241,7 +250,7 @@ fn main() {
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
-        render(&mut framebuffer, &uniforms, &vertex_arrays);
+        render(&mut framebuffer, &uniforms, &vertex_arrays, &renderer);
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
@@ -249,7 +258,7 @@ fn main() {
     }
 }
 
-fn handle_input(window: &Window, camera: &mut Camera) {
+fn handle_input(window: &Window, camera: &mut Camera, renderer: &mut Renderer) {
     let movement_speed = 1.0;
     let rotation_speed = PI/50.0;
     let zoom_speed = 0.1;
@@ -292,5 +301,28 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     }
     if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
+    }
+
+    //Planet view control
+    if window.is_key_down(Key::Key1) {
+        renderer.change_shader(1);
+    }
+    if window.is_key_down(Key::Key2) {
+        renderer.change_shader(2);
+    }
+    if window.is_key_down(Key::Key3) {
+        renderer.change_shader(3);
+    }
+    if window.is_key_down(Key::Key4) {
+        renderer.change_shader(4);
+    }
+    if window.is_key_down(Key::Key5) {
+        renderer.change_shader(5);
+    }
+    if window.is_key_down(Key::Key6) {
+        renderer.change_shader(6);
+    }
+    if window.is_key_down(Key::Key7) {
+        renderer.change_shader(7);
     }
 }

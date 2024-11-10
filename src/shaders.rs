@@ -1,4 +1,5 @@
 use nalgebra_glm::{Vec3, Vec4, Mat3, mat4_to_mat3};
+use crate::renderer::{Renderer, ShaderType};
 use crate::vertex::Vertex;
 use crate::Uniforms;
 use crate::fragment::Fragment;
@@ -8,6 +9,7 @@ use rand::SeedableRng;
 use rand::rngs::StdRng;
 
 pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
+  
   // Transform position
   let position = Vec4::new(
     vertex.position.x,
@@ -46,15 +48,47 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
   }
 }
 
-pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // random_color_shader(fragment, uniforms)
-  // black_and_white(fragment, uniforms)
-  dalmata_shader(fragment, uniforms)
-  // cloud_shader(fragment, uniforms)
-  // cellular_shader(fragment, uniforms)
-  // cracked_ground_shader(fragment, uniforms)
-  // lava_shader(fragment, uniforms)
+pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
+  match renderer.current_shader {
+      ShaderType::RandomColor => random_color_shader(fragment, uniforms),
+      ShaderType::BlackAndWhite => black_and_white(fragment, uniforms),
+      ShaderType::Dalmata => dalmata_shader(fragment, uniforms),
+      ShaderType::Cloud => cloud_shader(fragment, uniforms),
+      ShaderType::Cellular => cellular_shader(fragment, uniforms),
+      ShaderType::Lava => lava_shader(fragment, uniforms),
+      ShaderType::BlueGreen => blue_green_shader(fragment, uniforms),
+  }
 }
+
+fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Define los colores base para azul y verde
+  let blue_color = Color::new(0, 0, 255);    // Azul
+  let green_color = Color::new(0, 255, 0);   // Verde
+
+  // Ajusta estos valores para controlar el tamaño y la repetición de los patrones de color
+  let zoom = 50.0;
+  let ox = 100.0;
+  let oy = 100.0;
+
+  // Coordenadas de ruido
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let t = uniforms.time as f32 * 0.1;  // Suaviza la variación en el tiempo
+
+  // Calcula un valor de ruido en 2D
+  let noise_value = uniforms.noise.get_noise_2d(x * zoom + ox + t, y * zoom + oy);
+
+  // Umbral para decidir el color, ajustado para obtener una distribución variada
+  let color = if noise_value > 0.0 {
+    blue_color
+  } else {
+    green_color
+  };
+
+  // Multiplica por intensidad para aplicar efectos de iluminación
+  color * fragment.intensity
+}
+
 
 fn random_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let seed = uniforms.time as u64;
