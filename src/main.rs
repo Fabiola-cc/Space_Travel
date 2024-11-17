@@ -210,11 +210,10 @@ fn render_scene(
     }
 }
 
-fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer) {
-    // Limpiar la escena
+fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: u32) {
     scene.objects.clear();
 
-    // Siempre incluir el planeta
+    // Agregar el planeta
     scene.objects.push(Object {
         model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
         transform: Transform {
@@ -224,25 +223,33 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer) {
         },
     });
 
-    // Incluir la luna si el renderer tiene cierta configuración
+    // Agregar la luna si está habilitada
     if renderer.include_moon {
+        let orbit_radius = 1.5; // Distancia entre el planeta y la luna
+        let speed = 0.005;        // Velocidad de la órbita
+
+        // Calcular posición de la luna
+        let angle = time as f32 * speed; // Ángulo de la órbita (en radianes)
+        let moon_x = orbit_radius * angle.cos();
+        let moon_z = orbit_radius * angle.sin();
+
         scene.objects.push(Object {
             model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
             transform: Transform {
-                position: Vec3::new(1.5, 0.5, 0.0), // Posición relativa al planeta
-                scale: 0.3,                       // Tamaño más pequeño para la luna
-                rotation: Vec3::new(0.0, 0.0, 0.0),
+                position: Vec3::new(moon_x, 0.5, moon_z), // Posición dinámica
+                scale: 0.3,                              // Tamaño de la luna
+                rotation: Vec3::new(0.0, angle, 0.0),    // Rotación para simular giro
             },
         });
     }
 
-    // Incluir los anillos si el renderer tiene otra configuración
+    // Agregar anillos si están habilitados
     if renderer.include_rings {
         scene.objects.push(Object {
             model: Obj::load("assets/models/rings.obj").expect("Failed to load obj"),
             transform: Transform {
-                position: Vec3::new(0.0, 0.0, 0.0), // Anillos centrados en el planeta
-                scale: 0.4,                        // Escalado para que sean grandes
+                position: Vec3::new(0.0, 0.0, 0.0), // Centrado en el planeta
+                scale: 0.35,
                 rotation: Vec3::new(0.0, 0.0, 0.0),
             },
         });
@@ -330,7 +337,7 @@ fn main() {
         framebuffer.clear();
 
         // Actualizar la escena según las configuraciones del renderer
-        update_scene_based_on_renderer(&mut scene, &renderer);
+        update_scene_based_on_renderer(&mut scene, &renderer, time);
 
         uniforms.model_matrix = create_model_matrix(translation, scale, rotation);
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
