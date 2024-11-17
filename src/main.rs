@@ -19,7 +19,7 @@ use camera::Camera;
 use triangle::triangle;
 use shaders::{vertex_shader, fragment_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
-use crate::renderer::{Renderer, NoiseUse, ShaderType};
+use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform};
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -30,6 +30,10 @@ pub struct Uniforms {
     noise: FastNoiseLite
 }
 
+struct Scene {
+    objects: Vec<Object>, // Lista de objetos en la escena
+}
+
 fn create_noise(renderer: &Renderer) -> FastNoiseLite {
     match renderer.current_noise {
         NoiseUse::Cloud => create_cloud_noise(),
@@ -38,7 +42,6 @@ fn create_noise(renderer: &Renderer) -> FastNoiseLite {
         NoiseUse::Lava => create_lava_noise(),
     }
 }
-
 
 fn create_cloud_noise() -> FastNoiseLite {
     let mut noise = FastNoiseLite::with_seed(1337);
@@ -182,6 +185,71 @@ fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Ve
     }
 }
 
+fn render_scene(
+    framebuffer: &mut Framebuffer,
+    scene: &Scene,
+    uniforms: &mut Uniforms,
+    renderer: &Renderer,
+) {
+    for object in &scene.objects {
+        // Actualizar la matriz modelo para el objeto actual
+        let model_matrix = create_model_matrix(
+            object.transform.position,
+            object.transform.scale,
+            object.transform.rotation,
+        );
+
+        // Crear una copia de los uniforms y actualizar la matriz modelo
+        uniforms.model_matrix = model_matrix;
+
+        // Obtener los vértices del objeto
+        let vertex_array = object.model.get_vertex_array();
+
+        // Renderizar el objeto
+        render(framebuffer, &uniforms, &vertex_array, renderer);
+    }
+}
+
+fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer) {
+    // Limpiar la escena
+    scene.objects.clear();
+
+    // Siempre incluir el planeta
+    scene.objects.push(Object {
+        model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+        transform: Transform {
+            position: Vec3::new(0.0, 0.0, 0.0),
+            scale: 1.0,
+            rotation: Vec3::new(0.0, 0.0, 0.0),
+        },
+    });
+
+    // Incluir la luna si el renderer tiene cierta configuración
+    if renderer.include_moon {
+        scene.objects.push(Object {
+            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+            transform: Transform {
+                position: Vec3::new(1.5, 0.5, 0.0), // Posición relativa al planeta
+                scale: 0.3,                       // Tamaño más pequeño para la luna
+                rotation: Vec3::new(0.0, 0.0, 0.0),
+            },
+        });
+    }
+
+    // Incluir los anillos si el renderer tiene otra configuración
+    if renderer.include_rings {
+        scene.objects.push(Object {
+            model: Obj::load("assets/models/rings.obj").expect("Failed to load obj"),
+            transform: Transform {
+                position: Vec3::new(0.0, 0.0, 0.0), // Anillos centrados en el planeta
+                scale: 0.4,                        // Escalado para que sean grandes
+                rotation: Vec3::new(0.0, 0.0, 0.0),
+            },
+        });
+    }
+}
+
+
 fn main() {
     let window_width = 800;
     let window_height = 600;
@@ -190,7 +258,9 @@ fn main() {
 
     let mut renderer = Renderer {
         current_shader: ShaderType::RandomColor, 
-        current_noise: NoiseUse::Cloud,         
+        current_noise: NoiseUse::Cloud,
+        include_moon: false,
+        include_rings: false,
     };
     
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
@@ -219,6 +289,15 @@ fn main() {
         Vec3::new(0.0, 1.0, 0.0)
     );
 
+    let planet = Object {
+        model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"), // Cargar el modelo del planeta
+        transform: Transform {
+            position: Vec3::new(0.0, 0.0, 0.0),
+            scale: 1.0f32,
+            rotation: Vec3::new(0.0, 0.0, 0.0),
+        },
+    };
+
     let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array(); 
     let mut time = 0;
@@ -235,6 +314,10 @@ fn main() {
         noise
     };
 
+    let mut scene = Scene {
+        objects: vec![planet], // Agrega más objetos si lo necesitas
+    };    
+
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
             break;
@@ -246,11 +329,17 @@ fn main() {
 
         framebuffer.clear();
 
+        // Actualizar la escena según las configuraciones del renderer
+        update_scene_based_on_renderer(&mut scene, &renderer);
+
         uniforms.model_matrix = create_model_matrix(translation, scale, rotation);
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
-        render(&mut framebuffer, &uniforms, &vertex_arrays, &renderer);
+        //render(&mut framebuffer, &uniforms, &vertex_arrays, &renderer);
+        // Renderizar la escena completa
+        render_scene(&mut framebuffer, &scene, &mut uniforms, &renderer);
+
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
