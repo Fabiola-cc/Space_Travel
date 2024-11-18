@@ -28,12 +28,19 @@ pub struct Renderer {
 pub struct Object {
     pub model: Obj,         // La geometría del objeto
     pub transform: Transform, // Transformaciones (posición, rotación, escala)
+    pub shader: ShaderModelType
 }
 
 pub struct Transform {
     pub position: Vec3,
     pub scale: f32,
     pub rotation: Vec3
+}
+
+pub enum ShaderModelType {
+    PlanetShader,
+    MoonShader,
+    RingShader,
 }
 
 impl Renderer {

@@ -17,9 +17,11 @@ use vertex::Vertex;
 use obj::Obj;
 use camera::Camera;
 use triangle::triangle;
-use shaders::{vertex_shader, fragment_shader};
+use crate::fragment::Fragment;
+use crate::color::Color;
+use shaders::{vertex_shader, fragment_shader, moon_shader, ring_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
-use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform};
+use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform, ShaderModelType};
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -145,7 +147,8 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
-fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], renderer: &Renderer) {
+fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], renderer: &Renderer,
+    fragment_shader: fn(&Fragment, &Uniforms, &Renderer) -> Color) {
     // Vertex Shader Stage
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
     for vertex in vertex_array {
@@ -199,14 +202,20 @@ fn render_scene(
             object.transform.rotation,
         );
 
-        // Crear una copia de los uniforms y actualizar la matriz modelo
+        let shader_function = match object.shader {
+            ShaderModelType::PlanetShader => fragment_shader,
+            ShaderModelType::MoonShader => moon_shader, // Usar el nuevo shader rocoso
+            ShaderModelType::RingShader => ring_shader,  // Usar el shader de los anillos
+        };
+
+        // actualizar la matriz modelo
         uniforms.model_matrix = model_matrix;
 
         // Obtener los vértices del objeto
         let vertex_array = object.model.get_vertex_array();
 
         // Renderizar el objeto
-        render(framebuffer, &uniforms, &vertex_array, renderer);
+        render(framebuffer, &uniforms, &vertex_array, renderer, shader_function);
     }
 }
 
@@ -221,6 +230,7 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: 
             scale: 1.0,
             rotation: Vec3::new(0.0, 0.0, 0.0),
         },
+        shader: ShaderModelType::PlanetShader,
     });
 
     // Agregar la luna si está habilitada
@@ -240,6 +250,7 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: 
                 scale: 0.3,                              // Tamaño de la luna
                 rotation: Vec3::new(0.0, angle, 0.0),    // Rotación para simular giro
             },
+            shader: ShaderModelType::MoonShader,
         });
     }
 
@@ -252,6 +263,7 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: 
                 scale: 0.35,
                 rotation: Vec3::new(0.0, 0.0, 0.0),
             },
+            shader: ShaderModelType::RingShader,
         });
     }
 }
@@ -303,6 +315,7 @@ fn main() {
             scale: 1.0f32,
             rotation: Vec3::new(0.0, 0.0, 0.0),
         },
+        shader: ShaderModelType::PlanetShader,
     };
 
     let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");

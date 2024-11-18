@@ -60,7 +60,86 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Rend
   }
 }
 
-fn rocky_planet_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
+  // Colores base para los anillos
+  let base_color = Color::new(200, 200, 200); // Gris claro
+  let stripe_color = Color::new(150, 150, 150); // Gris oscuro
+
+  // Coordenadas de posición del fragmento
+  let x = fragment.vertex_position.x;
+  let z = fragment.vertex_position.z;
+
+  // Parámetros para el ruido
+  let zoom = 100.0;
+  let t = uniforms.time as f32 * 0.01; // Movimiento suave para animación
+  let ring_pattern = ((x * 10.0).sin() + (z * 10.0).cos()).abs(); // Patrón basado en seno y coseno
+
+  // Variaciones suaves con ruido
+  let noise_variation = uniforms.noise.get_noise_3d(
+      x * zoom,
+      z * zoom,
+      t,
+  );
+
+  // Alternar colores según el patrón de bandas
+  let color = if (ring_pattern + noise_variation) % 1.0 > 0.5 {
+      base_color // Banda clara
+  } else {
+      stripe_color // Banda oscura
+  };
+
+  // Aplicar la intensidad lumínica
+  color * fragment.intensity
+}
+
+pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
+  // Colores base para un planeta rocoso
+  let base_color = Color::new(139, 69, 19); // Marrón rojizo (típico de Marte)
+  let highlight_color = Color::new(210, 180, 140); // Resaltados claros
+  let shadow_color = Color::new(50, 25, 0); // Sombras profundas
+
+  // Coordenadas de posición del fragmento
+  let x = fragment.vertex_position.x;
+  let y = fragment.vertex_position.y;
+  let depth = fragment.depth;
+
+  // Parámetros para el ruido
+  let zoom = 150.0;
+  let bumpiness = 0.3;
+  let t = uniforms.time as f32 * 0.005; // Variación temporal mínima
+
+  // Detalles grandes (montañas, valles)
+  let terrain_noise = uniforms.noise.get_noise_3d(
+      x * zoom,
+      y * zoom,
+      depth * zoom,
+  );
+
+  // Detalles pequeños (rugosidad)
+  let fine_detail_noise = uniforms.noise.get_noise_3d(
+      x * zoom * 5.0,
+      y * zoom * 5.0,
+      depth * zoom * 5.0,
+  );
+
+  // Combinar los niveles de ruido
+  let combined_noise = (terrain_noise * 0.6 + fine_detail_noise * 0.4) * bumpiness;
+
+  // Selección de colores según el ruido
+  let color = if combined_noise > 0.4 {
+      highlight_color // Áreas elevadas
+  } else if combined_noise > 0.2 {
+      base_color // Color base
+  } else {
+      shadow_color // Cráteres
+  };
+
+  // Aplicar la intensidad lumínica
+  color * fragment.intensity
+}
+
+
+fn rocky_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para un planeta rocoso
   let base_color = Color::new(139, 69, 19);      // Marrón rojizo (típico de Marte)
   let highlight_color = Color::new(210, 180, 140); // Color claro para resaltar montañas y bordes
