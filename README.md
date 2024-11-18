@@ -52,3 +52,6 @@ Para compilar y ejecutar el proyecto, asegúrate de tener Rust instalado y ejecu
 ``cargo run``
 
 El programa abrirá una ventana donde podrás ver los efectos visuales de cada planeta y experimentar con las distintas opciones de renderizado.
+
+### Resultado
+[Ver el video en YouTube](https://youtu.be/XrfG1RIbx9o)
