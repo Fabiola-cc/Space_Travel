@@ -1,6 +1,7 @@
 use crate::obj::Obj;
 use nalgebra_glm::Vec3;
 
+#[derive(Clone, Copy)]
 pub enum ShaderType {
     RandomColor,
     BlackAndWhite,
@@ -9,6 +10,8 @@ pub enum ShaderType {
     Cellular,
     Lava,
     BlueGreen,
+    MoonShader,
+    RingShader,
 }
 
 pub enum NoiseUse {
@@ -28,19 +31,13 @@ pub struct Renderer {
 pub struct Object {
     pub model: Obj,         // La geometría del objeto
     pub transform: Transform, // Transformaciones (posición, rotación, escala)
-    pub shader: ShaderModelType
+    pub shader: ShaderType
 }
 
 pub struct Transform {
     pub position: Vec3,
     pub scale: f32,
     pub rotation: Vec3
-}
-
-pub enum ShaderModelType {
-    PlanetShader,
-    MoonShader,
-    RingShader,
 }
 
 impl Renderer {

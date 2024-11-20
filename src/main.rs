@@ -22,9 +22,10 @@ use camera::Camera;
 use triangle::triangle;
 use crate::fragment::Fragment;
 use crate::color::Color;
-use shaders::{vertex_shader, fragment_shader, moon_shader, ring_shader};
+use shaders::{vertex_shader, moon_shader, ring_shader, gaseous_giant_shader, black_and_white,
+    dalmata_shader, cloud_shader, cellular_shader, solar_shader, blue_green_shader,};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
-use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform, ShaderModelType};
+use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform};
 use texture::init_texture;
 use normal_map::init_normal_map;
 use skybox::Skybox;
@@ -154,7 +155,7 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
 }
 
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], renderer: &Renderer,
-    fragment_shader: fn(&Fragment, &Uniforms, &Renderer) -> Color) {
+    fragment_shader: fn(&Fragment, &Uniforms) -> Color) {
     // Vertex Shader Stage
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
     for vertex in vertex_array {
@@ -186,7 +187,7 @@ fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Ve
         let y = fragment.position.y as usize;
         if x < framebuffer.width && y < framebuffer.height {
             // Apply fragment shader
-            let shaded_color = fragment_shader(&fragment, &uniforms, &renderer);
+            let shaded_color = fragment_shader(&fragment, &uniforms);
             let color = shaded_color.to_hex();
             framebuffer.set_current_color(color);
             framebuffer.point(x, y, fragment.depth);
@@ -209,9 +210,15 @@ fn render_scene(
         );
 
         let shader_function = match object.shader {
-            ShaderModelType::PlanetShader => fragment_shader,
-            ShaderModelType::MoonShader => moon_shader, // Usar el nuevo shader rocoso
-            ShaderModelType::RingShader => ring_shader,  // Usar el shader de los anillos
+            ShaderType::MoonShader => moon_shader, // Usar el nuevo shader rocoso
+            ShaderType::RingShader => ring_shader,
+            ShaderType::RandomColor => gaseous_giant_shader,
+            ShaderType::BlackAndWhite => black_and_white,
+            ShaderType::Dalmata => dalmata_shader,
+            ShaderType::Cloud => cloud_shader,
+            ShaderType::Cellular => cellular_shader,
+            ShaderType::Lava => solar_shader,
+            ShaderType::BlueGreen => blue_green_shader,
         };
 
         // actualizar la matriz modelo
@@ -227,17 +234,6 @@ fn render_scene(
 
 fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: u32) {
     scene.objects.clear();
-
-    // Agregar el planeta
-    scene.objects.push(Object {
-        model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
-        transform: Transform {
-            position: Vec3::new(0.0, 0.0, 0.0),
-            scale: 1.0,
-            rotation: Vec3::new(0.0, 0.0, 0.0),
-        },
-        shader: ShaderModelType::PlanetShader,
-    });
 
     // Agregar la luna si está habilitada
     if renderer.include_moon {
@@ -256,7 +252,7 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: 
                 scale: 0.3,                              // Tamaño de la luna
                 rotation: Vec3::new(0.0, angle, 0.0),    // Rotación para simular giro
             },
-            shader: ShaderModelType::MoonShader,
+            shader: ShaderType::MoonShader,
         });
     }
 
@@ -269,7 +265,7 @@ fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: 
                 scale: 0.35,
                 rotation: Vec3::new(0.0, 0.0, 0.0),
             },
-            shader: ShaderModelType::RingShader,
+            shader: ShaderType::RingShader,
         });
     }
 }
@@ -314,18 +310,37 @@ fn main() {
         Vec3::new(0.0, 1.0, 0.0)
     );
 
-    let planet = Object {
-        model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"), // Cargar el modelo del planeta
-        transform: Transform {
-            position: Vec3::new(0.0, 0.0, 0.0),
-            scale: 1.0f32,
-            rotation: Vec3::new(0.0, 0.0, 0.0),
-        },
-        shader: ShaderModelType::PlanetShader,
-    };
+    // Posiciones de los planetas en el eje X
+    let positions = [
+        -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
+    ];
 
-    let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");
-    let vertex_arrays = obj.get_vertex_array(); 
+    // Shaders para cada planeta
+    let shaders = [
+        ShaderType::RandomColor,
+        ShaderType::BlackAndWhite,
+        ShaderType::Dalmata,
+        ShaderType::Cloud,
+        ShaderType::Cellular,
+        ShaderType::Lava,
+        ShaderType::BlueGreen,
+    ];
+
+    // Crear los planetas
+    let planets: Vec<Object> = positions
+        .iter()
+        .zip(shaders.iter())
+        .map(|(&x, &shader)| Object {
+            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+            transform: Transform {
+                position: Vec3::new(x, 0.0, 0.0), // Alineados en el eje X
+                scale: 1.0,
+                rotation: Vec3::new(0.0, 0.0, 0.0),
+            },
+            shader,
+        })
+    .collect();
+
     let mut time = 0;
 
     let skybox = Skybox::new(5000);
@@ -342,8 +357,8 @@ fn main() {
         noise
     };
 
-    let mut scene = Scene {
-        objects: vec![planet], // Agrega más objetos si lo necesitas
+    let scene = Scene {
+        objects: planets,
     };    
 
     while window.is_open() {
@@ -357,8 +372,6 @@ fn main() {
 
         framebuffer.clear();
 
-        // Actualizar la escena según las configuraciones del renderer
-        update_scene_based_on_renderer(&mut scene, &renderer, time);
         skybox.render(&mut framebuffer, &uniforms, camera.eye);
 
         uniforms.model_matrix = create_model_matrix(translation, scale, rotation);
@@ -421,26 +434,4 @@ fn handle_input(window: &Window, camera: &mut Camera, renderer: &mut Renderer) {
         camera.zoom(-zoom_speed);
     }
 
-    //Planet view control
-    if window.is_key_down(Key::Key1) {
-        renderer.change_shader(1);
-    }
-    if window.is_key_down(Key::Key2) {
-        renderer.change_shader(2);
-    }
-    if window.is_key_down(Key::Key3) {
-        renderer.change_shader(3);
-    }
-    if window.is_key_down(Key::Key4) {
-        renderer.change_shader(4);
-    }
-    if window.is_key_down(Key::Key5) {
-        renderer.change_shader(5);
-    }
-    if window.is_key_down(Key::Key6) {
-        renderer.change_shader(6);
-    }
-    if window.is_key_down(Key::Key7) {
-        renderer.change_shader(7);
-    }
 }

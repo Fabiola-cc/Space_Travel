@@ -48,19 +48,7 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
   }
 }
 
-pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
-  match renderer.current_shader {
-      ShaderType::RandomColor => gaseous_giant_shader(fragment, uniforms),
-      ShaderType::BlackAndWhite => black_and_white(fragment, uniforms),
-      ShaderType::Dalmata => dalmata_shader(fragment, uniforms),
-      ShaderType::Cloud => cloud_shader(fragment, uniforms),
-      ShaderType::Cellular => cellular_shader(fragment, uniforms),
-      ShaderType::Lava => solar_shader(fragment, uniforms),
-      ShaderType::BlueGreen => blue_green_shader(fragment, uniforms),
-  }
-}
-
-pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
+pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para los anillos
   let base_color = Color::new(200, 200, 200); // Gris claro
   let stripe_color = Color::new(150, 150, 150); // Gris oscuro
@@ -92,7 +80,7 @@ pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer
   color * fragment.intensity
 }
 
-pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer) -> Color {
+pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para un planeta rocoso
   let base_color = Color::new(139, 69, 19); // Marrón rojizo (típico de Marte)
   let highlight_color = Color::new(210, 180, 140); // Resaltados claros
@@ -139,7 +127,7 @@ pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms, renderer: &Renderer
 }
 
 
-fn rocky_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn rocky_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para un planeta rocoso
   let base_color = Color::new(139, 69, 19);      // Marrón rojizo (típico de Marte)
   let highlight_color = Color::new(210, 180, 140); // Color claro para resaltar montañas y bordes
@@ -186,7 +174,7 @@ fn rocky_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn gaseous_giant_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn gaseous_giant_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para la atmósfera de un gigante gaseoso (pueden ajustarse para simular diferentes planetas)
   let cloud_color = Color::new(232, 220, 77);  
   let band_color1 = Color::new(255, 255, 255); 
@@ -234,7 +222,7 @@ fn gaseous_giant_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para la textura de "estrella" o "sol"
   let core_color = Color::new(255, 69, 0); // Naranja rojizo intenso
   let outer_glow_color = Color::new(255, 179, 0); // Naranja rojizo intenso
@@ -284,7 +272,7 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Define los colores base para azul y verde
   let blue_color = Color::new(0, 0, 255);    // Azul
   let green_color = Color::new(0, 255, 0);   // Verde
@@ -313,7 +301,7 @@ fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   color * fragment.intensity
 }
 
-fn tri_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn tri_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Define los colores para cada capa
   let blue_color = Color::new(0, 0, 255);      // Azul
   let green_color = Color::new(0, 255, 0);     // Verde
@@ -346,7 +334,7 @@ fn tri_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn random_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn random_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let seed = uniforms.time as u64;
 
   let mut rng = StdRng::seed_from_u64(seed);
@@ -360,7 +348,7 @@ fn random_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   random_color * fragment.intensity
 }
 
-fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let seed = uniforms.time as f32 * fragment.vertex_position.y * fragment.vertex_position.x;
 
   let mut rng = StdRng::seed_from_u64(seed.abs() as u64);
@@ -376,7 +364,7 @@ fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   black_or_white * fragment.intensity
 }
 
-fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let zoom = 100.0;
   let ox = 0.0;
   let oy = 0.0;
@@ -401,7 +389,7 @@ fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   noise_color * fragment.intensity
 }
 
-fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let zoom = 100.0;  // to move our values 
   let ox = 100.0; // offset x in the noise map
   let oy = 100.0;
@@ -426,7 +414,7 @@ fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   noise_color * fragment.intensity
 }
 
-fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let zoom = 30.0;  // Zoom factor to adjust the scale of the cell pattern
   let ox = 50.0;    // Offset x in the noise map
   let oy = 50.0;    // Offset y in the noise map
@@ -457,7 +445,7 @@ fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   final_color * fragment.intensity
 }
 
-fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+pub fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Base colors for the lava effect
   let bright_color = Color::new(255, 240, 0); // Bright orange (lava-like)
   let dark_color = Color::new(130, 20, 0);   // Darker red-orange
