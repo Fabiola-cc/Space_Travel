@@ -11,6 +11,9 @@ mod fragment;
 mod shaders;
 mod camera;
 mod renderer;
+mod texture;
+mod normal_map;
+mod skybox;
 
 use framebuffer::Framebuffer;
 use vertex::Vertex;
@@ -22,6 +25,9 @@ use crate::color::Color;
 use shaders::{vertex_shader, fragment_shader, moon_shader, ring_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
 use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform, ShaderModelType};
+use texture::init_texture;
+use normal_map::init_normal_map;
+use skybox::Skybox;
 
 pub struct Uniforms {
     model_matrix: Mat4,
