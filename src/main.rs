@@ -328,6 +328,8 @@ fn main() {
     let vertex_arrays = obj.get_vertex_array(); 
     let mut time = 0;
 
+    let skybox = Skybox::new(5000);
+
     let noise = create_noise(&renderer);
     let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
     let viewport_matrix = create_viewport_matrix(framebuffer_width as f32, framebuffer_height as f32);
@@ -357,6 +359,7 @@ fn main() {
 
         // Actualizar la escena según las configuraciones del renderer
         update_scene_based_on_renderer(&mut scene, &renderer, time);
+        skybox.render(&mut framebuffer, &uniforms, camera.eye);
 
         uniforms.model_matrix = create_model_matrix(translation, scale, rotation);
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
