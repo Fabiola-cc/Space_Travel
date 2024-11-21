@@ -154,7 +154,7 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
-fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], renderer: &Renderer,
+fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], 
     fragment_shader: fn(&Fragment, &Uniforms) -> Color) {
     // Vertex Shader Stage
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
@@ -199,7 +199,6 @@ fn render_scene(
     framebuffer: &mut Framebuffer,
     scene: &Scene,
     uniforms: &mut Uniforms,
-    renderer: &Renderer,
 ) {
     for object in &scene.objects {
         // Actualizar la matriz modelo para el objeto actual
@@ -228,61 +227,15 @@ fn render_scene(
         let vertex_array = object.model.get_vertex_array();
 
         // Renderizar el objeto
-        render(framebuffer, &uniforms, &vertex_array, renderer, shader_function);
+        render(framebuffer, &uniforms, &vertex_array, shader_function);
     }
 }
-
-fn update_scene_based_on_renderer(scene: &mut Scene, renderer: &Renderer, time: u32) {
-    scene.objects.clear();
-
-    // Agregar la luna si está habilitada
-    if renderer.include_moon {
-        let orbit_radius = 1.5; // Distancia entre el planeta y la luna
-        let speed = 0.005;        // Velocidad de la órbita
-
-        // Calcular posición de la luna
-        let angle = time as f32 * speed; // Ángulo de la órbita (en radianes)
-        let moon_x = orbit_radius * angle.cos();
-        let moon_z = orbit_radius * angle.sin();
-
-        scene.objects.push(Object {
-            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
-            transform: Transform {
-                position: Vec3::new(moon_x, 0.5, moon_z), // Posición dinámica
-                scale: 0.3,                              // Tamaño de la luna
-                rotation: Vec3::new(0.0, angle, 0.0),    // Rotación para simular giro
-            },
-            shader: ShaderType::MoonShader,
-        });
-    }
-
-    // Agregar anillos si están habilitados
-    if renderer.include_rings {
-        scene.objects.push(Object {
-            model: Obj::load("assets/models/rings.obj").expect("Failed to load obj"),
-            transform: Transform {
-                position: Vec3::new(0.0, 0.0, 0.0), // Centrado en el planeta
-                scale: 0.35,
-                rotation: Vec3::new(0.0, 0.0, 0.0),
-            },
-            shader: ShaderType::RingShader,
-        });
-    }
-}
-
 
 fn main() {
     let window_width = 800;
     let window_height = 600;
     let framebuffer_width = 800;
     let framebuffer_height = 600;
-
-    let mut renderer = Renderer {
-        current_shader: ShaderType::RandomColor, 
-        current_noise: NoiseUse::Cloud,
-        include_moon: false,
-        include_rings: false,
-    };
     
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
     let mut window = Window::new(
@@ -297,6 +250,11 @@ fn main() {
     window.update();
 
     framebuffer.set_background_color(0x333355);
+
+    // Variables para la luna
+    let orbit_radius = 1.5; // Distancia de la luna al planeta
+    let speed = 0.005;      // Velocidad de órbita
+    let time = 100;         // Tiempo actual (simulado para cálculo dinámico)
 
     // model position
     let translation = Vec3::new(0.0, 0.0, 0.0);
@@ -326,26 +284,56 @@ fn main() {
         ShaderType::BlueGreen,
     ];
 
-    // Crear los planetas
-    let planets: Vec<Object> = positions
-        .iter()
+    // Crear los planetas y añadir lunas o anillos donde sea necesario
+    let mut objects: Vec<Object> = vec![];
+
+    positions.iter()
         .zip(shaders.iter())
-        .map(|(&x, &shader)| Object {
-            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
-            transform: Transform {
-                position: Vec3::new(x, 0.0, 0.0), // Alineados en el eje X
-                scale: 1.0,
-                rotation: Vec3::new(0.0, 0.0, 0.0),
-            },
-            shader,
-        })
-    .collect();
+        .enumerate()
+        .for_each(|(index, (&x, &shader))| {
+            // Añadir el planeta
+            objects.push(Object {
+                model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+                transform: Transform {
+                    position: Vec3::new(x, 0.0, 0.0),
+                    scale: 1.0,
+                    rotation: Vec3::new(0.0, 0.0, 0.0),
+                },
+                shader,
+            });
+
+            // Añadir luna
+            if index == 3 {
+                objects.push(Object {
+                    model: Obj::load("assets/models/sphere.obj").expect("Failed to load moon obj"),
+                    transform: Transform {
+                        position: Vec3::new(x + moon_x, 0.5, moon_z), // Posición relativa al planeta
+                        scale: 0.3,
+                        rotation: Vec3::new(0.0, angle, 0.0),
+                    },
+                    shader: ShaderType::MoonShader, // Shader para la luna
+                });
+            }
+
+            // Añadir anillos al último planeta
+            if index == positions.len() - 1 {
+                objects.push(Object {
+                    model: Obj::load("assets/models/rings.obj").expect("Failed to load rings obj"),
+                    transform: Transform {
+                        position: Vec3::new(x, 0.0, 0.0), // Centrado en el planeta
+                        scale: 0.3,
+                        rotation: Vec3::new(0.0, 0.0, 0.0),
+                    },
+                    shader: ShaderType::RingShader, // Shader para los anillos
+                });
+            }
+        });
 
     let mut time = 0;
 
     let skybox = Skybox::new(5000);
 
-    let noise = create_noise(&renderer);
+    let noise = create_cloud_noise();
     let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
     let viewport_matrix = create_viewport_matrix(framebuffer_width as f32, framebuffer_height as f32);
     let mut uniforms = Uniforms { 
@@ -358,7 +346,7 @@ fn main() {
     };
 
     let scene = Scene {
-        objects: planets,
+        objects,
     };    
 
     while window.is_open() {
@@ -368,7 +356,7 @@ fn main() {
 
         time += 1;
 
-        handle_input(&window, &mut camera, &mut renderer);
+        handle_input(&window, &mut camera);
 
         framebuffer.clear();
 
@@ -378,9 +366,9 @@ fn main() {
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
-        //render(&mut framebuffer, &uniforms, &vertex_arrays, &renderer);
+        
         // Renderizar la escena completa
-        render_scene(&mut framebuffer, &scene, &mut uniforms, &renderer);
+        render_scene(&mut framebuffer, &scene, &mut uniforms);
 
 
         window
@@ -389,7 +377,7 @@ fn main() {
     }
 }
 
-fn handle_input(window: &Window, camera: &mut Camera, renderer: &mut Renderer) {
+fn handle_input(window: &Window, camera: &mut Camera) {
     let movement_speed = 1.0;
     let rotation_speed = PI/50.0;
     let zoom_speed = 0.1;
@@ -432,6 +420,9 @@ fn handle_input(window: &Window, camera: &mut Camera, renderer: &mut Renderer) {
     }
     if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
+    }
+    if window.is_key_down(Key::B) {
+        camera.zoom(-zoom_speed*8.0);
     }
 
 }
