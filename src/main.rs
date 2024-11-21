@@ -253,8 +253,13 @@ fn main() {
 
     // Variables para la luna
     let orbit_radius = 1.5; // Distancia de la luna al planeta
-    let speed = 0.005;      // Velocidad de órbita
-    let time = 100;         // Tiempo actual (simulado para cálculo dinámico)
+    let moon_speed = 0.00005;      // Velocidad de órbita
+    let mut time = 0;         // Tiempo actual (simulado para cálculo dinámico)
+
+    // Calcular posición dinámica de la luna
+    let angle = time as f32 * moon_speed; // Ángulo de la órbita
+    let moon_x = orbit_radius * angle.cos();
+    let moon_z = orbit_radius * angle.sin();
 
     // model position
     let translation = Vec3::new(0.0, 0.0, 0.0);
@@ -329,7 +334,6 @@ fn main() {
             }
         });
 
-    let mut time = 0;
 
     let skybox = Skybox::new(5000);
 
@@ -345,7 +349,7 @@ fn main() {
         noise
     };
 
-    let scene = Scene {
+    let mut scene = Scene {
         objects,
     };    
 
@@ -355,6 +359,16 @@ fn main() {
         }
 
         time += 1;
+
+        // Calcular posición dinámica de la luna
+        let angle = time as f32 * moon_speed; // Ángulo de la órbita
+        let moon_x = orbit_radius * angle.cos();
+        let moon_z = orbit_radius * angle.sin();
+
+        // Actualizar la posición de la luna en la escena
+        if let Some(moon) = scene.objects.iter_mut().find(|obj| matches!(obj.shader, ShaderType::MoonShader)) {
+            moon.transform.position = Vec3::new(positions[3] + moon_x, 0.5, moon_z); // Relativa al planeta en el índice 3
+        }
 
         handle_input(&window, &mut camera);
 
