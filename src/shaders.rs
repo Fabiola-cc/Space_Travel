@@ -82,9 +82,9 @@ pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
 pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para un planeta rocoso
-  let base_color = Color::new(139, 69, 19); // Marrón rojizo (típico de Marte)
-  let highlight_color = Color::new(210, 180, 140); // Resaltados claros
-  let shadow_color = Color::new(50, 25, 0); // Sombras profundas
+  let base_color = Color::new(139, 149, 151); 
+  let highlight_color = Color::new(120, 180, 140); // Resaltados claros
+  let shadow_color = Color::new(139, 149, 151); // Sombras profundas
 
   // Coordenadas de posición del fragmento
   let x = fragment.vertex_position.x;

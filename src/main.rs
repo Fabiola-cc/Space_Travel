@@ -252,14 +252,9 @@ fn main() {
     framebuffer.set_background_color(0x333355);
 
     // Variables para la luna
-    let orbit_radius = 1.5; // Distancia de la luna al planeta
-    let moon_speed = 0.00005;      // Velocidad de órbita
+    let orbit_radius = 0.75; // Distancia de la luna al planeta
+    let moon_speed = 0.05;      // Velocidad de órbita
     let mut time = 0;         // Tiempo actual (simulado para cálculo dinámico)
-
-    // Calcular posición dinámica de la luna
-    let angle = time as f32 * moon_speed; // Ángulo de la órbita
-    let moon_x = orbit_radius * angle.cos();
-    let moon_z = orbit_radius * angle.sin();
 
     // model position
     let translation = Vec3::new(0.0, 0.0, 0.0);
@@ -278,61 +273,68 @@ fn main() {
         -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
     ];
 
+    // Escalas de los planetas
+    let scales = [
+        2.0, 0.3, 0.9, 0.6, 1.0, 0.8, 1.3
+    ];
+
     // Shaders para cada planeta
     let shaders = [
+        ShaderType::Lava,
         ShaderType::RandomColor,
         ShaderType::BlackAndWhite,
         ShaderType::Dalmata,
         ShaderType::Cloud,
-        ShaderType::Cellular,
-        ShaderType::Lava,
+        ShaderType::Cellular,        
         ShaderType::BlueGreen,
     ];
 
     // Crear los planetas y añadir lunas o anillos donde sea necesario
     let mut objects: Vec<Object> = vec![];
 
-    positions.iter()
-        .zip(shaders.iter())
-        .enumerate()
-        .for_each(|(index, (&x, &shader))| {
-            // Añadir el planeta
+    positions
+    .iter()
+    .zip(shaders.iter())
+    .zip(scales.iter())
+    .enumerate()
+    .for_each(|(index, ((&x, &shader), &scale))| {
+        // Añadir el planeta con escala variable
+        objects.push(Object {
+            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+            transform: Transform {
+                position: Vec3::new(x, 0.0, 0.0),
+                scale,
+                rotation: Vec3::new(0.0, 0.0, 0.0),
+            },
+            shader,
+        });
+
+        // Añadir luna al cuarto planeta
+        if index == 3 {
             objects.push(Object {
-                model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+                model: Obj::load("assets/models/sphere.obj").expect("Failed to load moon obj"),
                 transform: Transform {
-                    position: Vec3::new(x, 0.0, 0.0),
-                    scale: 1.0,
+                    position: Vec3::new(x + 1.5 * scale, 0.5, 0.0), // Posición relativa al planeta
+                    scale: 0.3 * scale,                            // Escala proporcional
                     rotation: Vec3::new(0.0, 0.0, 0.0),
                 },
-                shader,
+                shader: ShaderType::MoonShader, // Shader para la luna
             });
+        }
 
-            // Añadir luna
-            if index == 3 {
-                objects.push(Object {
-                    model: Obj::load("assets/models/sphere.obj").expect("Failed to load moon obj"),
-                    transform: Transform {
-                        position: Vec3::new(x + moon_x, 0.5, moon_z), // Posición relativa al planeta
-                        scale: 0.3,
-                        rotation: Vec3::new(0.0, angle, 0.0),
-                    },
-                    shader: ShaderType::MoonShader, // Shader para la luna
-                });
-            }
-
-            // Añadir anillos al último planeta
-            if index == positions.len() - 1 {
-                objects.push(Object {
-                    model: Obj::load("assets/models/rings.obj").expect("Failed to load rings obj"),
-                    transform: Transform {
-                        position: Vec3::new(x, 0.0, 0.0), // Centrado en el planeta
-                        scale: 0.3,
-                        rotation: Vec3::new(0.0, 0.0, 0.0),
-                    },
-                    shader: ShaderType::RingShader, // Shader para los anillos
-                });
-            }
-        });
+        // Añadir anillos al último planeta
+        if index == positions.len() - 1 {
+            objects.push(Object {
+                model: Obj::load("assets/models/rings.obj").expect("Failed to load rings obj"),
+                transform: Transform {
+                    position: Vec3::new(x, 0.0, 0.0), // Centrado en el planeta
+                    scale: 0.3 * scale,               // Escala proporcional
+                    rotation: Vec3::new(0.0, 0.0, 0.0),
+                },
+                shader: ShaderType::RingShader, // Shader para los anillos
+            });
+        }
+    });
 
 
     let skybox = Skybox::new(5000);
