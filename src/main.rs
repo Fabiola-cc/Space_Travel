@@ -154,6 +154,28 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
+// Función para dibujar una órbita
+fn draw_orbit(framebuffer: &mut Framebuffer, radius: f32) {
+    let num_points = 100; // Puntos para aproximar el círculo
+    for i in 0..num_points {
+        let angle1 = 2.0 * std::f32::consts::PI * (i as f32) / (num_points as f32);
+        let angle2 = 2.0 * std::f32::consts::PI * ((i + 1) as f32) / (num_points as f32);
+
+        let x1 = radius * angle1.cos();
+        let z1 = radius * angle1.sin();
+        let x2 = radius * angle2.cos();
+        let z2 = radius * angle2.sin();
+
+        framebuffer.draw_line(
+            (x1 + framebuffer.width as f32 / 2.0) as usize,
+            (z1 + framebuffer.height as f32 / 2.0) as usize,
+            (x2 + framebuffer.width as f32 / 2.0) as usize,
+            (z2 + framebuffer.height as f32 / 2.0) as usize,
+            0x888888, // Color de la órbita
+        );
+    }
+}
+
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], 
     fragment_shader: fn(&Fragment, &Uniforms) -> Color) {
     // Vertex Shader Stage
@@ -261,80 +283,96 @@ fn main() {
     let rotation = Vec3::new(0.0, 0.0, 0.0);
     let scale = 1.0f32;
 
-    // camera parameters
+    // camera parameters ABCD
     let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 5.0),
+        Vec3::new(-2.0, 10.0, 10.0),
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
 
     // Posiciones de los planetas en el eje X
     let positions = [
-        -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
+        -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
     ];
 
     // Escalas de los planetas
     let scales = [
-        2.0, 0.3, 0.9, 0.6, 1.0, 0.8, 1.3
+        0.3, 0.9, 0.6, 1.0, 0.8, 1.3
     ];
 
     // Shaders para cada planeta
     let shaders = [
-        ShaderType::Lava,
-        ShaderType::RandomColor,
         ShaderType::BlackAndWhite,
         ShaderType::Dalmata,
         ShaderType::Cloud,
         ShaderType::Cellular,        
         ShaderType::BlueGreen,
+        ShaderType::RandomColor,
     ];
 
-    // Crear los planetas y añadir lunas o anillos donde sea necesario
-    let mut objects: Vec<Object> = vec![];
 
+    // Velocidades de órbita (en radianes por unidad de tiempo)
+    let orbit_speeds = [0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.06];
+
+    // Distancias al planeta central
+    let orbit_radii = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0];
+
+    // Planeta central
+    let mut objects: Vec<Object> = vec![Object {
+        model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+        transform: Transform {
+            position: Vec3::new(-6.0, 0.0, 0.0), // Centro de la órbita
+            scale: 2.0,                  // Tamaño del planeta central
+            rotation: Vec3::new(0.0, 0.0, 0.0),
+        },
+        shader: ShaderType::Lava,
+    }];
+
+    // Añadir los planetas orbitantes
     positions
-    .iter()
-    .zip(shaders.iter())
-    .zip(scales.iter())
-    .enumerate()
-    .for_each(|(index, ((&x, &shader), &scale))| {
-        // Añadir el planeta con escala variable
-        objects.push(Object {
-            model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
-            transform: Transform {
-                position: Vec3::new(x, 0.0, 0.0),
-                scale,
-                rotation: Vec3::new(0.0, 0.0, 0.0),
-            },
-            shader,
+        .iter()
+        .zip(shaders.iter())
+        .zip(scales.iter())
+        .zip(orbit_speeds.iter())
+        .zip(orbit_radii.iter())
+        .enumerate()
+        .for_each(|(index, ((((&x, &shader), &scale), &speed), &radius))| {
+            objects.push(Object {
+                model: Obj::load("assets/models/sphere.obj").expect("Failed to load obj"),
+                transform: Transform {
+                    position: Vec3::new(x, 0.0, 0.0), // Se ajustará dinámicamente
+                    scale,
+                    rotation: Vec3::new(0.0, 0.0, 0.0),
+                },
+                shader,
+            });
+
+            // Añadir luna al cuarto planeta
+            if index == 3 {
+                objects.push(Object {
+                    model: Obj::load("assets/models/sphere.obj").expect("Failed to load moon obj"),
+                    transform: Transform {
+                        position: Vec3::new(x + 1.5 * scale, 0.5, 0.0), // Posición relativa al planeta
+                        scale: 0.3 * scale,                            // Escala proporcional
+                        rotation: Vec3::new(0.0, 0.0, 0.0),
+                    },
+                    shader: ShaderType::MoonShader, // Shader para la luna
+                });
+            }
+
+            // Añadir anillos al último planeta
+            if index == positions.len() - 1 {
+                objects.push(Object {
+                    model: Obj::load("assets/models/rings.obj").expect("Failed to load rings obj"),
+                    transform: Transform {
+                        position: Vec3::new(x, 0.0, 0.0), // Centrado en el planeta
+                        scale: 0.3 * scale,               // Escala proporcional
+                        rotation: Vec3::new(0.0, 0.0, 0.0),
+                    },
+                    shader: ShaderType::RingShader, // Shader para los anillos
+                });
+            }
         });
-
-        // Añadir luna al cuarto planeta
-        if index == 3 {
-            objects.push(Object {
-                model: Obj::load("assets/models/sphere.obj").expect("Failed to load moon obj"),
-                transform: Transform {
-                    position: Vec3::new(x + 1.5 * scale, 0.5, 0.0), // Posición relativa al planeta
-                    scale: 0.3 * scale,                            // Escala proporcional
-                    rotation: Vec3::new(0.0, 0.0, 0.0),
-                },
-                shader: ShaderType::MoonShader, // Shader para la luna
-            });
-        }
-
-        // Añadir anillos al último planeta
-        if index == positions.len() - 1 {
-            objects.push(Object {
-                model: Obj::load("assets/models/rings.obj").expect("Failed to load rings obj"),
-                transform: Transform {
-                    position: Vec3::new(x, 0.0, 0.0), // Centrado en el planeta
-                    scale: 0.3 * scale,               // Escala proporcional
-                    rotation: Vec3::new(0.0, 0.0, 0.0),
-                },
-                shader: ShaderType::RingShader, // Shader para los anillos
-            });
-        }
-    });
 
 
     let skybox = Skybox::new(5000);
@@ -362,14 +400,50 @@ fn main() {
 
         time += 1;
 
-        // Calcular posición dinámica de la luna
-        let angle = time as f32 * moon_speed; // Ángulo de la órbita
-        let moon_x = orbit_radius * angle.cos();
-        let moon_z = orbit_radius * angle.sin();
+        let mut planet_ax = 0.0;
+        let mut planet_az = 0.0;
+        let mut planet_bx = 0.0;
+        let mut planet_bz = 0.0;
+
+        // Actualizar posiciones orbitales de los planetas
+        scene.objects.iter_mut().enumerate().for_each(|(index, obj)| {
+            // Ignorar la luna o los anillos que no deben orbitar
+            if matches!(obj.shader, ShaderType::MoonShader | ShaderType::RingShader | ShaderType::Lava) {
+                return;
+            }
+
+            // Calcular la posición orbital solo si no es el planeta central
+            if index != 0 {
+                let radius = orbit_radii[index - 1];
+                let speed = orbit_speeds[index - 1];
+                let angle = time as f32 * speed;
+
+                // Actualizar la posición orbital
+                obj.transform.position.x = positions[0] + radius * angle.cos();
+                obj.transform.position.z = radius * angle.sin();
+
+                if index == 3 {
+                    planet_ax = obj.transform.position.x;
+                    planet_az = obj.transform.position.z;
+                }
+                if index == 6 {
+                    planet_bx = obj.transform.position.x;
+                    planet_bz = obj.transform.position.z;
+                }
+            }
+        });
+
+        // Actualizar la posición dinámica de la luna
+        let moon_angle = time as f32 * moon_speed; // Ángulo basado en el tiempo
+        let moon_x = orbit_radius * moon_angle.cos();
+        let moon_z = orbit_radius * moon_angle.sin();
 
         // Actualizar la posición de la luna en la escena
         if let Some(moon) = scene.objects.iter_mut().find(|obj| matches!(obj.shader, ShaderType::MoonShader)) {
-            moon.transform.position = Vec3::new(positions[3] + moon_x, 0.5, moon_z); // Relativa al planeta en el índice 3
+            moon.transform.position = Vec3::new(planet_ax + moon_x, 0.5, planet_az + moon_z); // Relativa al planeta central
+        }
+        if let Some(rings) = scene.objects.iter_mut().find(|obj| matches!(obj.shader, ShaderType::RingShader)) {
+            rings.transform.position = Vec3::new(planet_bx, 0.0, planet_bz); // Relativa al planeta central
         }
 
         handle_input(&window, &mut camera);
@@ -382,10 +456,14 @@ fn main() {
         uniforms.view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
-        
+
+        // // Dibujar órbitas como líneas
+        // orbit_radii.iter().for_each(|&radius| {
+        //     draw_orbit(&mut framebuffer, radius);
+        // });
+
         // Renderizar la escena completa
         render_scene(&mut framebuffer, &scene, &mut uniforms);
-
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
@@ -438,7 +516,7 @@ fn handle_input(window: &Window, camera: &mut Camera) {
         camera.zoom(-zoom_speed);
     }
     if window.is_key_down(Key::B) {
-        camera.zoom(-zoom_speed*8.0);
+        camera.eye = Vec3::new(-2.0, 10.0, 10.0);
     }
 
 }
