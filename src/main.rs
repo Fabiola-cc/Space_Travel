@@ -289,7 +289,7 @@ fn main() {
         shader: ShaderType::Lava,
     }];
 
-    // Añadir los planetas orbitantes
+    //Añadir los planetas orbitantes
     positions
         .iter()
         .zip(shaders.iter())
@@ -338,8 +338,8 @@ fn main() {
 
     let skybox = Skybox::new(5000);
 
-    init_texture("assets/texture/planet.jpg").expect("Failed To load texture");
-    init_normal_map("assets/texture/planet_normal.jpg").expect("Failed To load normal map");
+    init_texture("assets/texture/planet.png").expect("Failed To load texture");
+    init_normal_map("assets/texture/planet_nm.png").expect("Failed To load normal map");
 
     let noise = create_cloud_noise();
     let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
