@@ -301,7 +301,7 @@ fn main() {
 
     // Escalas de los planetas
     let scales = [
-        0.3, 0.9, 0.6, 1.0, 0.8, 1.3
+        0.3, 0.9, 0.6, 1.0, 0.4, 0.5
     ];
 
     // Shaders para cada planeta
@@ -310,13 +310,13 @@ fn main() {
         ShaderType::Dalmata,
         ShaderType::Cloud,
         ShaderType::Cellular,        
-        ShaderType::BlueGreen,
         ShaderType::RandomColor,
+        ShaderType::BlueGreen,
     ];
 
 
     // Velocidades de órbita (en radianes por unidad de tiempo)
-    let orbit_speeds = [0.01, 0.015, 0.02, 0.025, 0.003, 0.0035, 0.04, 0.06];
+    let orbit_speeds = [0.01, 0.015, 0.04, 0.025, 0.003, 0.0035, 0.02, 0.06];
 
     // Distancias al planeta central
     let orbit_radii = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0];

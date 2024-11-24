@@ -50,8 +50,8 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 
 pub fn ring_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Colores base para los anillos
-  let base_color = Color::new(200, 200, 200); // Gris claro
-  let stripe_color = Color::new(150, 150, 150); // Gris oscuro
+  let base_color = Color::new(163, 138, 67);
+  let stripe_color = Color::new(166, 109, 51);
 
   // Coordenadas de posición del fragmento
   let x = fragment.vertex_position.x;

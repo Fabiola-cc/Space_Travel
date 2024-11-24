@@ -31,7 +31,10 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
         let normal = normal.normalize();
 
         // Calculate lighting intensity
-        let intensity = dot(&normal, &light_dir).max(0.0);
+        let ambient_intensity = 0.2; // Ajusta según el efecto deseado (0.0 a 1.0)
+        let diffuse_intensity = dot(&normal, &light_dir).max(0.0);
+        let intensity = ambient_intensity + diffuse_intensity;
+
 
         // Create a gray color (unchanged)
         let color = Color::new(100, 100, 100); // Medium gray
