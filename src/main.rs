@@ -157,13 +157,16 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
 // Función para dibujar una órbita
 fn draw_orbit(framebuffer: &mut Framebuffer, radius: f32) {
     let num_points = 100; // Puntos para aproximar el círculo
+    let aspect_ratio = framebuffer.width as f32 / framebuffer.height as f32;
+
     for i in 0..num_points {
         let angle1 = 2.0 * std::f32::consts::PI * (i as f32) / (num_points as f32);
         let angle2 = 2.0 * std::f32::consts::PI * ((i + 1) as f32) / (num_points as f32);
 
-        let x1 = radius * angle1.cos();
+        // Ajustar por la relación de aspecto
+        let x1 = radius * angle1.cos() * aspect_ratio;
         let z1 = radius * angle1.sin();
-        let x2 = radius * angle2.cos();
+        let x2 = radius * angle2.cos() * aspect_ratio;
         let z2 = radius * angle2.sin();
 
         framebuffer.draw_line(
@@ -175,6 +178,7 @@ fn draw_orbit(framebuffer: &mut Framebuffer, radius: f32) {
         );
     }
 }
+
 
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], 
     fragment_shader: fn(&Fragment, &Uniforms) -> Color) {
@@ -312,10 +316,11 @@ fn main() {
 
 
     // Velocidades de órbita (en radianes por unidad de tiempo)
-    let orbit_speeds = [0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.06];
+    let orbit_speeds = [0.01, 0.015, 0.02, 0.025, 0.003, 0.0035, 0.04, 0.06];
 
     // Distancias al planeta central
     let orbit_radii = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0];
+    let orbit_draw = [65.0, 100.0, 130.0, 175.0, 220.0, 250.0];
 
     // Planeta central
     let mut objects: Vec<Object> = vec![Object {
@@ -404,6 +409,7 @@ fn main() {
         let mut planet_az = 0.0;
         let mut planet_bx = 0.0;
         let mut planet_bz = 0.0;
+        let aspect_ratio = framebuffer.width as f32 / framebuffer.height as f32;
 
         // Actualizar posiciones orbitales de los planetas
         scene.objects.iter_mut().enumerate().for_each(|(index, obj)| {
@@ -419,7 +425,7 @@ fn main() {
                 let angle = time as f32 * speed;
 
                 // Actualizar la posición orbital
-                obj.transform.position.x = positions[0] + radius * angle.cos();
+                obj.transform.position.x = -6.0 + radius * angle.cos() * aspect_ratio;
                 obj.transform.position.z = radius * angle.sin();
 
                 if index == 3 {
@@ -457,10 +463,10 @@ fn main() {
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
 
-        if camera.eye == Vec3::new(-1.44, 14.41, 0.11){
+        if camera.eye == Vec3::new(-4.5, 15.00, 0.00){
             // Dibujar órbitas como líneas
-            orbit_radii.iter().for_each(|&radius| {
-                let scaled_radius = radius * 20.0; // Aumenta el radio para hacerlo más grande
+            orbit_draw.iter().for_each(|&radius| {
+                let scaled_radius = radius;
                 draw_orbit(&mut framebuffer, scaled_radius);
             });
         }
@@ -482,11 +488,11 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     //  camera orbit controls
     if window.is_key_down(Key::Left) {
         camera.orbit(rotation_speed, 0.0);
-        print!("{}", camera.eye);
+        
     }
     if window.is_key_down(Key::Right) {
         camera.orbit(-rotation_speed, 0.0);
-        print!("{}", camera.eye);
+        
     }
     if window.is_key_down(Key::W) {
         camera.orbit(0.0, -rotation_speed);
@@ -494,7 +500,6 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     }
     if window.is_key_down(Key::S) {
         camera.orbit(0.0, rotation_speed);
-        print!("{}", camera.eye);
     }
 
     // Camera movement controls
@@ -513,21 +518,22 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     }
     if movement.magnitude() > 0.0 {
         camera.move_center(movement);
-        print!("{}", camera.center);
+        
     }
 
     // Camera zoom controls
     if window.is_key_down(Key::Up) {
         camera.zoom(zoom_speed);
-        print!("{}", camera.eye)
+        
     }
     if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
-        print!("{}", camera.eye)
+        
     }
     if window.is_key_down(Key::B) {
-        camera.eye = Vec3::new(-1.44, 14.41, 0.11);
-        camera.center = Vec3::new(-5.7, 0.6, 0.05);
+        camera.eye = Vec3::new(-4.5, 15.00, 0.00);
+        camera.center = Vec3::new(-6.0, 0.0, 0.0);
+        camera.up = Vec3::new(0.0, 1.0, 0.0);
     }
 
 }
