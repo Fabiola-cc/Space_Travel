@@ -457,10 +457,13 @@ fn main() {
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
 
-        // // Dibujar órbitas como líneas
-        // orbit_radii.iter().for_each(|&radius| {
-        //     draw_orbit(&mut framebuffer, radius);
-        // });
+        if camera.eye == Vec3::new(-1.44, 14.41, 0.11){
+            // Dibujar órbitas como líneas
+            orbit_radii.iter().for_each(|&radius| {
+                let scaled_radius = radius * 20.0; // Aumenta el radio para hacerlo más grande
+                draw_orbit(&mut framebuffer, scaled_radius);
+            });
+        }
 
         // Renderizar la escena completa
         render_scene(&mut framebuffer, &scene, &mut uniforms);
@@ -479,15 +482,19 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     //  camera orbit controls
     if window.is_key_down(Key::Left) {
         camera.orbit(rotation_speed, 0.0);
+        print!("{}", camera.eye);
     }
     if window.is_key_down(Key::Right) {
         camera.orbit(-rotation_speed, 0.0);
+        print!("{}", camera.eye);
     }
     if window.is_key_down(Key::W) {
         camera.orbit(0.0, -rotation_speed);
+        print!("{}", camera.eye);
     }
     if window.is_key_down(Key::S) {
         camera.orbit(0.0, rotation_speed);
+        print!("{}", camera.eye);
     }
 
     // Camera movement controls
@@ -506,17 +513,21 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     }
     if movement.magnitude() > 0.0 {
         camera.move_center(movement);
+        print!("{}", camera.center);
     }
 
     // Camera zoom controls
     if window.is_key_down(Key::Up) {
         camera.zoom(zoom_speed);
+        print!("{}", camera.eye)
     }
     if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
+        print!("{}", camera.eye)
     }
     if window.is_key_down(Key::B) {
-        camera.eye = Vec3::new(-2.0, 10.0, 10.0);
+        camera.eye = Vec3::new(-1.44, 14.41, 0.11);
+        camera.center = Vec3::new(-5.7, 0.6, 0.05);
     }
 
 }
