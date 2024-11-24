@@ -23,7 +23,7 @@ use triangle::triangle;
 use crate::fragment::Fragment;
 use crate::color::Color;
 use shaders::{vertex_shader, moon_shader, ring_shader, gaseous_giant_shader, black_and_white,
-    dalmata_shader, cloud_shader, cellular_shader, solar_shader, blue_green_shader, fragment_shader};
+    lava_shader, cloud_shader, cellular_shader, solar_shader, blue_green_shader, fragment_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
 use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform};
 use texture::init_texture;
@@ -155,30 +155,30 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
 }
 
 // Función para dibujar una órbita
-fn draw_orbit(framebuffer: &mut Framebuffer, radius: f32) {
-    let num_points = 100; // Puntos para aproximar el círculo
-    let aspect_ratio = framebuffer.width as f32 / framebuffer.height as f32;
+fn draw_orbit(framebuffer: &mut Framebuffer, radius: f32, aspect_ratio: f32) {
+    let num_points = (radius).max(100.0) as usize; // Ajustar según el radio
 
     for i in 0..num_points {
+        // Calcular ángulos
         let angle1 = 2.0 * std::f32::consts::PI * (i as f32) / (num_points as f32);
         let angle2 = 2.0 * std::f32::consts::PI * ((i + 1) as f32) / (num_points as f32);
 
-        // Ajustar por la relación de aspecto
+        // Puntos de la órbita escalados y ajustados
         let x1 = radius * angle1.cos() * aspect_ratio;
-        let z1 = radius * angle1.sin();
+        let z1 = radius * angle1.sin() / aspect_ratio;
         let x2 = radius * angle2.cos() * aspect_ratio;
-        let z2 = radius * angle2.sin();
+        let z2 = radius * angle2.sin() / aspect_ratio;
 
-        framebuffer.draw_line(
-            (x1 + framebuffer.width as f32 / 2.0) as usize,
-            (z1 + framebuffer.height as f32 / 2.0) as usize,
-            (x2 + framebuffer.width as f32 / 2.0) as usize,
-            (z2 + framebuffer.height as f32 / 2.0) as usize,
-            0x888888, // Color de la órbita
-        );
+        // Transformar a coordenadas de pantalla
+        let screen_x1 = (x1 + framebuffer.width as f32 / 2.0) as usize;
+        let screen_z1 = (z1 + framebuffer.height as f32 / 2.0) as usize;
+        let screen_x2 = (x2 + framebuffer.width as f32 / 2.0) as usize;
+        let screen_z2 = (z2 + framebuffer.height as f32 / 2.0) as usize;
+
+        // Dibujar línea entre los puntos
+        framebuffer.draw_line(screen_x1, screen_z1, screen_x2, screen_z2, 0x888888); // Color de la órbita
     }
 }
-
 
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], 
     fragment_shader: fn(&Fragment, &Uniforms) -> Color) {
@@ -239,9 +239,9 @@ fn render_scene(
             ShaderType::RingShader => ring_shader,
             ShaderType::RandomColor => gaseous_giant_shader,
             ShaderType::BlackAndWhite => black_and_white,
-            ShaderType::Dalmata => dalmata_shader,
+            ShaderType::Dalmata => lava_shader,
             ShaderType::Cloud => cloud_shader,
-            ShaderType::Cellular => cellular_shader,
+            ShaderType::Cellular => blue_green_shader,
             ShaderType::Lava => solar_shader,
             ShaderType::BlueGreen => fragment_shader,
         };
@@ -296,7 +296,7 @@ fn main() {
 
     // Posiciones de los planetas en el eje X
     let positions = [
-        -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
+        -4.0, -3.0, -2.0, -1.0, 0.0, 2.0,
     ];
 
     // Escalas de los planetas
@@ -309,18 +309,18 @@ fn main() {
         ShaderType::BlackAndWhite,
         ShaderType::Dalmata,
         ShaderType::Cloud,
-        ShaderType::Cellular,        
+        ShaderType::Cellular,
         ShaderType::RandomColor,
         ShaderType::BlueGreen,
     ];
 
 
     // Velocidades de órbita (en radianes por unidad de tiempo)
-    let orbit_speeds = [0.01, 0.015, 0.04, 0.025, 0.003, 0.0035, 0.02, 0.06];
+    let orbit_speeds = [0.01, 0.015, 0.004, 0.0025, 0.003, 0.0035, 0.02, 0.06];
 
     // Distancias al planeta central
     let orbit_radii = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0];
-    let orbit_draw = [65.0, 100.0, 130.0, 175.0, 220.0, 250.0];
+    let orbit_draw = [66.0, 99.0, 132.0, 165.0, 223.0, 260.0];
 
     // Planeta central
     let mut objects: Vec<Object> = vec![Object {
@@ -428,7 +428,7 @@ fn main() {
                 let angle = time as f32 * speed;
 
                 // Actualizar la posición orbital
-                obj.transform.position.x = -6.0 + radius * angle.cos() * aspect_ratio;
+                obj.transform.position.x = -6.0 + radius * angle.cos();
                 obj.transform.position.z = radius * angle.sin();
 
                 if index == 3 {
@@ -466,13 +466,12 @@ fn main() {
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
 
-        if camera.eye == Vec3::new(-4.5, 15.00, 0.00){
+        //if camera.eye == Vec3::new(-4.5, 15.00, 0.00){
             // Dibujar órbitas como líneas
             orbit_draw.iter().for_each(|&radius| {
-                let scaled_radius = radius;
-                draw_orbit(&mut framebuffer, scaled_radius);
+                draw_orbit(&mut framebuffer, radius, aspect_ratio);
             });
-        }
+        //}
 
         // Renderizar la escena completa
         render_scene(&mut framebuffer, &scene, &mut uniforms);

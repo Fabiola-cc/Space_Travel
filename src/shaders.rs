@@ -304,9 +304,9 @@ pub fn blue_green_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
 pub fn tri_color_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Define los colores para cada capa
-  let blue_color = Color::new(0, 0, 255);      // Azul
-  let green_color = Color::new(0, 255, 0);     // Verde
-  let cyan_color = Color::new(0, 255, 255);    // Cian (como color intermedio)
+  let blue_color = Color::new(255, 0, 255);    
+  let green_color = Color::new(100, 205, 50);     
+  let cyan_color = Color::new(183, 25, 155);
 
   // Configura valores para el tamaño y la repetición del patrón
   let zoom = 50.0;
