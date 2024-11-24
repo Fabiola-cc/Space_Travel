@@ -1,6 +1,6 @@
-# Shaders
+# Space Travel
 
-Este proyecto implementa un sistema de renderizado procedural en Rust utilizando shaders personalizados y ruido procedural para generar efectos visuales de diferentes planetas. Puedes explorar el entorno con controles de cámara y cambiar entre varios planetas para observar distintas texturas y efectos en tiempo real.
+Este proyecto es un simulador visual que recrea el movimiento orbital de planetas alrededor de un sol central. El sistema se construyó utilizando Rust y bibliotecas de gráficos personalizados, incorporando conceptos básicos de física y transformaciones geométricas. Además, implementa la renderización de órbitas, cálculos de movimiento orbital y consideraciones visuales como perspectiva y relaciones de aspecto.
 
 ## Tecnologías
 
@@ -11,20 +11,32 @@ Este proyecto implementa un sistema de renderizado procedural en Rust utilizando
 
 ## Estructura de Archivos
 
-- **`main.rs`**: Archivo principal que inicializa el sistema de renderizado y contiene el loop principal de la aplicación.
-- **`renderer.rs`**: Define la estructura y lógica del `Renderer`, que administra el shader y el ruido actual.
+- **`main.rs`**: Archivo principal que inicializa el sistema de renderizado y contiene el loop principal de la aplicación.s
 - **`shaders.rs`**: Contiene las implementaciones de los shaders para cada planeta.
 - **`vertex.rs`**: Define la estructura y transformación de vértices para renderizado.
 - **`color.rs`**: Define la estructura de color y las operaciones de interpolación de color.
 - **`fragment.rs`**: Define la estructura de fragmento, que almacena los datos de cada pixel en pantalla.
 
+## Requisitos del proyecto 
+
+### no subjetivos
+- 10 puntos: creación de skybox que muestre estrellas en el horizonte
+- 20 puntos: implementar movimiento 3D para la cámara
+- 10 puntos: implementar una tecla que permita hacer un bird eye view de todo su sistema
+- 20 puntos: renderizar las orbitas de los planetas
+- 10 puntos: uso de un mapa normal en el último planeta
+
+### subjetivos
+- 30 Puntos por la estética del sistema completo
+- 20 Puntos por el performance de la escena completa
+
 ## Controles de Teclado
 
-### Selección de Planetas
+### Bird View
 
-Para cambiar entre planetas, usa las teclas del `1` al `7`:
+Para visualizar el sistema completo
 
-- **1-7**: Cambia al planeta correspondiente y aplica un shader y tipo de ruido específicos.
+- **B**: Cambia la posición de zoom y centro, y muestra la órbita de los planetas
 
 ### Controles de Cámara
 
@@ -54,4 +66,4 @@ Para compilar y ejecutar el proyecto, asegúrate de tener Rust instalado y ejecu
 El programa abrirá una ventana donde podrás ver los efectos visuales de cada planeta y experimentar con las distintas opciones de renderizado.
 
 ### Resultado
-[Ver el video en YouTube](https://youtu.be/XrfG1RIbx9o)
+[Ver el video en YouTube](https://youtu.be/fbn-ZK-xIrE)
