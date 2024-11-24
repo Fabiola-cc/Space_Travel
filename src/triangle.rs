@@ -6,6 +6,7 @@ use crate::color::Color;
 pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
   let mut fragments = Vec::new();
   let (a, b, c) = (v1.transformed_position, v2.transformed_position, v3.transformed_position);
+  let (t1, t2, t3) = (v1.tex_coords, v2.tex_coords, v3.tex_coords);
 
   let (min_x, min_y, max_x, max_y) = calculate_bounding_box(&a, &b, &c);
 
@@ -45,6 +46,10 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
         // Positions of the original vertex
         let vertex_position = v1.position * w1 + v2.position * w2 + v3.position * w3;
 
+        // Interpolate texture coordinates
+        let tex_u = t1.x * w1 + t2.x * w2 + t3.x * w3;
+        let tex_v = t1.y * w1 + t2.y * w2 + t3.y * w3;
+
         fragments.push(Fragment::new(
             Vec2::new(x as f32, y as f32),
             color,
@@ -52,6 +57,7 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
             normal,
             intensity,
             vertex_position,
+            Vec2::new(tex_u, tex_v),
         ));
       }
     }

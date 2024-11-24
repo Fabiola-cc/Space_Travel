@@ -8,6 +8,7 @@ pub struct Fragment {
     pub normal: Vec3,
     pub intensity: f32,
     pub vertex_position: Vec3,
+    pub tex_coords: Vec2,
 }
 
 impl Fragment {
@@ -18,6 +19,7 @@ impl Fragment {
         normal: Vec3,
         intensity: f32,
         vertex_position: Vec3,
+        tex_coords: Vec2,
     ) -> Self {  
         Fragment {
             position,
@@ -26,6 +28,7 @@ impl Fragment {
             normal,
             intensity,
             vertex_position,
+            tex_coords
         }
     }
 }

@@ -23,7 +23,7 @@ use triangle::triangle;
 use crate::fragment::Fragment;
 use crate::color::Color;
 use shaders::{vertex_shader, moon_shader, ring_shader, gaseous_giant_shader, black_and_white,
-    dalmata_shader, cloud_shader, cellular_shader, solar_shader, blue_green_shader,};
+    dalmata_shader, cloud_shader, cellular_shader, solar_shader, blue_green_shader, fragment_shader};
 use fastnoise_lite::{FastNoiseLite, NoiseType, FractalType};
 use crate::renderer::{Renderer, NoiseUse, ShaderType, Object, Transform};
 use texture::init_texture;
@@ -243,7 +243,7 @@ fn render_scene(
             ShaderType::Cloud => cloud_shader,
             ShaderType::Cellular => cellular_shader,
             ShaderType::Lava => solar_shader,
-            ShaderType::BlueGreen => blue_green_shader,
+            ShaderType::BlueGreen => fragment_shader,
         };
 
         // actualizar la matriz modelo
@@ -381,6 +381,9 @@ fn main() {
 
 
     let skybox = Skybox::new(5000);
+
+    init_texture("assets/texture/planet.jpg").expect("Failed To load texture");
+    init_normal_map("assets/texture/planet_normal.jpg").expect("Failed To load normal map");
 
     let noise = create_cloud_noise();
     let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
