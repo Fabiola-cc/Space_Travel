@@ -243,10 +243,10 @@ fn main() {
     let rotation = Vec3::new(0.0, 0.0, 0.0);
     let scale = 1.0f32;
 
-    // camera parameters ABCD
+    // camera parameters
     let mut camera = Camera::new(
         Vec3::new(-2.0, 10.0, 10.0),
-        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(-6.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
 
@@ -272,7 +272,7 @@ fn main() {
 
 
     // Velocidades de órbita (en radianes por unidad de tiempo)
-    let orbit_speeds = [0.01, 0.015, 0.004, 0.0025, 0.003, 0.0035, 0.02, 0.06];
+    let orbit_speeds = [0.01, 0.015, 0.004, 0.025, 0.003, 0.035, 0.02, 0.06];
 
     // Distancias al planeta central
     let orbit_radii = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0];
@@ -422,12 +422,12 @@ fn main() {
         uniforms.time = time;
         framebuffer.set_current_color(0xFFDDDD);
 
-        //if camera.eye == Vec3::new(-4.5, 15.00, 0.00){
+        if camera.eye == Vec3::new(-4.5, 15.00, 0.00){
             // Dibujar órbitas como líneas
             orbit_draw.iter().for_each(|&radius| {
                 draw_orbit(&mut framebuffer, radius, aspect_ratio);
             });
-        //}
+        }
 
         // Renderizar la escena completa
         render_scene(&mut framebuffer, &scene, &mut uniforms);
@@ -446,15 +446,12 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     //  camera orbit controls
     if window.is_key_down(Key::Left) {
         camera.orbit(rotation_speed, 0.0);
-        
     }
     if window.is_key_down(Key::Right) {
         camera.orbit(-rotation_speed, 0.0);
-        
     }
     if window.is_key_down(Key::W) {
         camera.orbit(0.0, -rotation_speed);
-        print!("{}", camera.eye);
     }
     if window.is_key_down(Key::S) {
         camera.orbit(0.0, rotation_speed);
@@ -482,11 +479,9 @@ fn handle_input(window: &Window, camera: &mut Camera) {
     // Camera zoom controls
     if window.is_key_down(Key::Up) {
         camera.zoom(zoom_speed);
-        
     }
     if window.is_key_down(Key::Down) {
         camera.zoom(-zoom_speed);
-        
     }
     if window.is_key_down(Key::B) {
         camera.eye = Vec3::new(-4.5, 15.00, 0.00);
